@@ -1,0 +1,24 @@
+# .gitignore
+__pycache__/
+*.pyc
+*.pyo
+.env
+.env.local
+.venv/
+venv/
+temp/*.jpg
+temp/*.png
+temp/*.jpeg
+visualizations/*.jpg
+visualizations/*.png
+!temp/.gitkeep
+!visualizations/.gitkeep
+*.egg-info/
+dist/
+build/
+.eggs/
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

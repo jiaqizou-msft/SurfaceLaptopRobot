@@ -1,0 +1,44 @@
+# MyCobotAgent Configuration
+# Edit these values to match your setup
+
+robot:
+  # IP address of the Raspberry Pi on the myCobot 280 Pi
+  # Set a static IP or find it via your router/DHCP
+  host: "192.168.1.159"
+  port: 9000
+  # Motion defaults
+  default_speed: 30
+  safe_height: 230
+  # End effector orientation (pointing straight down)
+  default_rx: 0
+  default_ry: 180
+  default_rz: 90
+
+camera:
+  # MJPEG stream URL served from the Pi
+  # Deploy pi_camera_server.py on the Pi first
+  stream_url: "http://192.168.1.159:8080/video"
+  snapshot_url: "http://192.168.1.159:8080/snapshot"
+  # Local save directory for captured images
+  save_dir: "temp"
+
+calibration:
+  # Eye-to-hand calibration: 2-point linear interpolation
+  # You MUST recalibrate these for your own setup!
+  # Point 1 (e.g. bottom-left of workspace)
+  pixel_1: [130, 290]
+  robot_1: [-21.8, -197.4]
+  # Point 2 (e.g. top-right of workspace)
+  pixel_2: [640, 0]
+  robot_2: [215.0, -59.1]
+
+vlm:
+  # Azure OpenAI GPT-4o endpoint
+  azure_endpoint: "https://bugtotest-resource.cognitiveservices.azure.com/openai/deployments/gpt-4o/chat/completions?api-version=2025-01-01-preview"
+  # Set via environment variable AZURE_OPENAI_API_KEY, or paste here for local use
+  azure_api_key: "${AZURE_OPENAI_API_KEY}"
+  # Also used for the LLM agent planner
+  model: "gpt-4o"
+  max_tokens: 1024
+
+top_view_angles: [-62.13, 8.96, -87.71, -14.41, 2.54, -16.34]
