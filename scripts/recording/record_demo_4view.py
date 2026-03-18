@@ -71,9 +71,23 @@ def type_for_recording(mc, text):
         data = json.load(f)
     keys = data["keys"]
     HOVER_Z = 145
-    SLIDE_SPEED = 12
-    PRESS_SPEED = 6
     PRESS_Z_OFFSET = 3
+
+    # Speed profile
+    SLIDE = 40
+    PRESS = 30
+    APPROACH = 30
+
+    def wait_done(mc, timeout=2.0, min_wait=0.15):
+        time.sleep(min_wait)
+        t0 = time.time()
+        while time.time() - t0 < timeout:
+            try:
+                if mc.is_moving() == 0:
+                    return
+            except:
+                pass
+            time.sleep(0.05)
 
     positions = []
     for ch in text:
@@ -85,19 +99,20 @@ def type_for_recording(mc, text):
         return
 
     x, y, z = positions[0][1]
-    mc.send_coords([x, y, HOVER_Z, 0, 180, 90], 8, 0)
-    time.sleep(3)
+    mc.send_coords([x, y, HOVER_Z, 0, 180, 90], APPROACH, 0)
+    time.sleep(1.5)
 
     for key, (x, y, z) in positions:
         press_z = z - PRESS_Z_OFFSET
-        mc.send_coords([x, y, HOVER_Z, 0, 180, 90], SLIDE_SPEED, 0)
-        time.sleep(1.5)
-        mc.send_coords([x, y, press_z, 0, 180, 90], PRESS_SPEED, 0)
-        time.sleep(1.2)
-        mc.send_coords([x, y, HOVER_Z, 0, 180, 90], PRESS_SPEED, 0)
-        time.sleep(1.0)
+        mc.send_coords([x, y, HOVER_Z, 0, 180, 90], SLIDE, 0)
+        wait_done(mc, timeout=1.5, min_wait=0.2)
+        mc.send_coords([x, y, press_z, 0, 180, 90], PRESS, 0)
+        wait_done(mc, timeout=1.5, min_wait=0.4)
+        time.sleep(0.1)
+        mc.send_coords([x, y, HOVER_Z, 0, 180, 90], PRESS, 0)
+        wait_done(mc, timeout=1.5, min_wait=0.3)
 
-    mc.send_coords([x, y, 200, 0, 180, 90], 10, 0)
+    mc.send_coords([x, y, 200, 0, 180, 90], APPROACH, 0)
     time.sleep(2)
 
 

@@ -23,13 +23,28 @@ PROFILES = {
              "slide_wait": 1.5, "press_wait": 1.2, "release_wait": 1.0, "start_wait": 3},
     "medium": {"slide": 20, "press": 12, "approach": 15,
                "slide_wait": 0.8, "press_wait": 0.6, "release_wait": 0.5, "start_wait": 2},
-    "fast": {"slide": 30, "press": 20, "approach": 20,
-             "slide_wait": 0.5, "press_wait": 0.4, "release_wait": 0.3, "start_wait": 1.5},
+    "fast": {"slide": 40, "press": 30, "approach": 30,
+             "slide_wait": 0.3, "press_wait": 0.2, "release_wait": 0.2, "start_wait": 1.0},
 }
 
 SAFE_Z = 200
 HOVER_Z = 145
 PRESS_Z_OFFSET = 3
+
+
+def wait_until_arrived(mc, timeout=3.0, min_wait=0.15):
+    """Wait until the robot stops moving or timeout. Always waits at least min_wait."""
+    time.sleep(min_wait)
+    start = time.time()
+    while time.time() - start < timeout:
+        try:
+            moving = mc.is_moving()
+            if moving == 0:
+                return True
+        except:
+            pass
+        time.sleep(0.05)
+    return False
 
 # Load taught positions
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
@@ -89,11 +104,12 @@ def press_key(mc, key_name, sp):
         return False
     press_z = z - PRESS_Z_OFFSET
     mc.send_coords([x, y, HOVER_Z, 0, 180, 90], sp["approach"], 0)
-    time.sleep(sp["start_wait"])
+    wait_until_arrived(mc, timeout=sp["start_wait"] + 1.0, min_wait=0.3)
     mc.send_coords([x, y, press_z, 0, 180, 90], sp["press"], 0)
-    time.sleep(sp["press_wait"])
+    wait_until_arrived(mc, timeout=sp["press_wait"] + 1.0, min_wait=0.4)
+    time.sleep(0.1)
     mc.send_coords([x, y, HOVER_Z, 0, 180, 90], sp["press"], 0)
-    time.sleep(sp["release_wait"])
+    wait_until_arrived(mc, timeout=sp["release_wait"] + 1.0, min_wait=0.3)
     print(f"  ✓ '{key_name}'")
     return True
 
@@ -127,12 +143,19 @@ def type_text(mc, text, sp):
 
     for i, (key, (x, y, z)) in enumerate(keys):
         press_z = z - PRESS_Z_OFFSET
+
+        # Slide to above key at hover height
         mc.send_coords([x, y, HOVER_Z, 0, 180, 90], sp["slide"], 0)
-        time.sleep(sp["slide_wait"])
+        wait_until_arrived(mc, timeout=sp["slide_wait"] + 1.0, min_wait=0.2)
+
+        # Press down — must wait long enough for Z travel (hover to surface)
         mc.send_coords([x, y, press_z, 0, 180, 90], sp["press"], 0)
-        time.sleep(sp["press_wait"])
+        wait_until_arrived(mc, timeout=sp["press_wait"] + 1.0, min_wait=0.4)
+        time.sleep(0.1)  # brief hold on key surface
+
+        # Release back to hover
         mc.send_coords([x, y, HOVER_Z, 0, 180, 90], sp["press"], 0)
-        time.sleep(sp["release_wait"])
+        wait_until_arrived(mc, timeout=sp["release_wait"] + 1.0, min_wait=0.3)
         print(f"  ✓ '{key}' ({i+1}/{len(keys)})")
 
     mc.send_coords([x, y, SAFE_Z, 0, 180, 90], sp["approach"], 0)

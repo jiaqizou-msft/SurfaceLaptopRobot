@@ -2,11 +2,19 @@
 
 **Embodied AI Agent for myCobot 280 Pi** — A multi-camera robotic system that can see, understand, and physically interact with devices. Features keyboard typing, touchpad control, voice commands, and vision-language model integration.
 
-## Demo
+## Demos
+
+### Keyboard Typing (Fast Mode)
 
 ![Robot typing demo](demo_typing_4view.gif)
 
-*The myCobot 280 types "QWERTYASDFGHZXCVB" across three keyboard rows. Four camera views: overhead RealSense RGB, depth map, side webcam, and workspace overview.*
+*Types "QWERTYASDFGHZXCVB" across three rows at fast speed. Camera-measured 20.2mm key pitch with QWERTY row stagger correction.*
+
+### Touchpad Interaction
+
+![Touchpad demo](demo_touchpad.gif)
+
+*Swipe down, swipe up, and tap on the laptop touchpad. The finger maintains consistent contact pressure throughout the gesture.*
 
 ## Features
 
