@@ -4,9 +4,9 @@
 
 ## Demo: Robot Typing on a Laptop Keyboard
 
-![Robot typing demo — 3-camera view](demo_typing_3view.gif)
+![Robot typing demo — 4-camera view with depth](demo_typing_4view.gif)
 
-*The myCobot 280 types "sad" on a real laptop keyboard. Three simultaneous camera views: overhead RealSense D435i (RGBD), side-view webcam, and full workspace overview. The finger slides smoothly between keys, dipping to press each one.*
+*The myCobot 280 types "sad" on a real laptop keyboard. Four simultaneous views: overhead RealSense RGB, depth map (colorized), side-view webcam, and full workspace overview. The finger slides between keys at hover height, dipping to press each one with sub-key precision.*
 
 ---
 
