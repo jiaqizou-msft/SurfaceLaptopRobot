@@ -28,6 +28,7 @@ from mcp.server.fastmcp import FastMCP
 from src.cobot.config import get_config
 from src.cobot import actions
 from src.cobot.camera import get_camera
+from src.cobot.realsense import get_realsense, HAS_REALSENSE
 from src.vlm import pipeline
 from src.vlm.vlm_client import get_vlm_client
 from src.calibration.eye2hand import get_eye2hand
@@ -551,6 +552,92 @@ def robot_get_digital_input(pin: int) -> str:
     """Read a digital input pin on the end-effector."""
     val = actions.get_digital_input(pin)
     return json.dumps({"pin": pin, "value": val})
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# REALSENSE DEPTH CAMERA TOOLS
+# ══════════════════════════════════════════════════════════════════════════════
+
+@mcp.tool()
+def realsense_capture() -> str:
+    """
+    Capture a color + depth image from the Intel RealSense D435i.
+    Returns paths to the saved color and depth images.
+    The RealSense is connected to the laptop via USB and provides
+    high-quality RGB + aligned depth maps.
+    """
+    rs_cam = get_realsense()
+    color, depth_mm, _ = rs_cam.capture()
+    import cv2
+    os.makedirs("temp", exist_ok=True)
+    cv2.imwrite("temp/rs_color.jpg", color)
+    depth_cm = cv2.applyColorMap(cv2.convertScaleAbs(depth_mm, alpha=0.03), cv2.COLORMAP_JET)
+    cv2.imwrite("temp/rs_depth.jpg", depth_cm)
+    return json.dumps({
+        "color_path": "temp/rs_color.jpg",
+        "depth_path": "temp/rs_depth.jpg",
+        "shape": list(color.shape),
+    })
+
+
+@mcp.tool()
+def realsense_get_depth_at(u: int, v: int) -> str:
+    """
+    Get the depth (distance) at a specific pixel in the RealSense image.
+
+    Args:
+        u: Pixel X coordinate (0 = left)
+        v: Pixel Y coordinate (0 = top)
+
+    Returns depth in millimeters.
+    """
+    rs_cam = get_realsense()
+    depth_m = rs_cam.get_depth_at(u, v)
+    return json.dumps({"pixel": [u, v], "depth_mm": round(depth_m * 1000, 1)})
+
+
+@mcp.tool()
+def realsense_pixel_to_3d(u: int, v: int) -> str:
+    """
+    Convert a pixel coordinate to a 3D point in the camera frame using depth.
+    Requires the RealSense camera.
+
+    Args:
+        u: Pixel X coordinate
+        v: Pixel Y coordinate
+
+    Returns 3D point in camera frame (mm) and robot frame (mm) if calibrated.
+    """
+    rs_cam = get_realsense()
+    cam_pt = rs_cam.pixel_to_3d_camera(u, v)
+    result = {
+        "pixel": [u, v],
+        "camera_frame_mm": [round(c * 1000, 1) for c in cam_pt],
+    }
+    try:
+        robot_pt = rs_cam.pixel_to_3d_robot(u, v)
+        result["robot_frame_mm"] = [round(r, 1) for r in robot_pt]
+    except RuntimeError:
+        result["robot_frame_mm"] = "Not calibrated — run extrinsic calibration first"
+    return json.dumps(result)
+
+
+@mcp.tool()
+def realsense_get_workspace_depth() -> str:
+    """
+    Get depth statistics for the workspace visible to the RealSense.
+    Useful for understanding the scene layout and table distance.
+    """
+    rs_cam = get_realsense()
+    stats = rs_cam.get_workspace_depth_stats()
+    return json.dumps(stats)
+
+
+@mcp.tool()
+def realsense_get_intrinsics() -> str:
+    """Get the RealSense camera intrinsic parameters (focal length, principal point, etc.)."""
+    rs_cam = get_realsense()
+    return json.dumps(rs_cam.get_intrinsics_dict())
 
 
 # ══════════════════════════════════════════════════════════════════════════════
