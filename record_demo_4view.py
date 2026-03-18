@@ -91,11 +91,11 @@ def type_for_recording(mc, text):
     for key, (x, y, z) in positions:
         press_z = z - PRESS_Z_OFFSET
         mc.send_coords([x, y, HOVER_Z, 0, 180, 90], SLIDE_SPEED, 0)
-        time.sleep(1.2)
+        time.sleep(1.5)
         mc.send_coords([x, y, press_z, 0, 180, 90], PRESS_SPEED, 0)
-        time.sleep(0.8)
+        time.sleep(1.2)
         mc.send_coords([x, y, HOVER_Z, 0, 180, 90], PRESS_SPEED, 0)
-        time.sleep(0.8)
+        time.sleep(1.0)
 
     mc.send_coords([x, y, 200, 0, 180, 90], 10, 0)
     time.sleep(2)

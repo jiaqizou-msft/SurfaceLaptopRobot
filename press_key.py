@@ -159,15 +159,15 @@ def type_text(mc, text):
 
         # Slide to above the key (stay at hover height)
         mc.send_coords([x, y, HOVER_Z, 0, 180, 90], SLIDE_SPEED, 0)
-        time.sleep(1.2)
+        time.sleep(1.5)
 
         # Quick dip to press
         mc.send_coords([x, y, press_z, 0, 180, 90], PRESS_SPEED, 0)
-        time.sleep(0.8)
+        time.sleep(1.2)
 
         # Lift back to hover
         mc.send_coords([x, y, HOVER_Z, 0, 180, 90], PRESS_SPEED, 0)
-        time.sleep(0.8)
+        time.sleep(1.0)
 
         print(f"  ✓ '{key}' ({i+1}/{len(keys_to_press)})")
 
