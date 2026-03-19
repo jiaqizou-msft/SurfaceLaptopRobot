@@ -4,6 +4,12 @@
 
 ## Demos
 
+### Full Demo: Type + Swipe + Dance
+
+![Full demo](demo_full.gif)
+
+*Types "SADFAT" on the keyboard, swipes the touchpad up and down, then performs a dance — all in one sequence. Four-camera view: overhead RGB, depth map, side view, and workspace overview.*
+
 ### Keyboard Typing (Fast Mode)
 
 ![Robot typing demo](demo_typing_4view.gif)
