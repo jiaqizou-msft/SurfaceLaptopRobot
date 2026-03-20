@@ -4,11 +4,17 @@
 
 ## Demos
 
-### Full Demo: Type + Swipe + Dance
+### Dual-Arm Key Pressing (A, Enter, Z, K)
 
-![Full demo](demo_full.gif)
+![Dual-arm demo](demo_dual_arm_keys.gif)
 
-*Types "SADFAT" on the keyboard, swipes the touchpad up and down, then performs a dance — all in one sequence. Four-camera view: overhead RGB, depth map, side view, and workspace overview.*
+*Two robot arms working together: left arm presses A, Z and right arm presses Enter, K. Three camera views: overhead RealSense, front RealSense, and workspace overview webcam.*
+
+### XML-Based Key Detection (78 Keys + Touchpad)
+
+![Key detection](demo_key_detection.jpg)
+
+*All 78 keys automatically mapped from the Ortler keyboard XML layout. Just click 2 anchor keys in the overhead image — the system computes every key's position using the exact mm geometry from the XML.*
 
 ### Keyboard Typing (Fast Mode)
 
@@ -20,12 +26,13 @@
 
 ![Touchpad demo](demo_touchpad.gif)
 
-*Swipe down, swipe up, and tap on the laptop touchpad. The finger maintains consistent contact pressure throughout the gesture.*
+*Swipe down, swipe up, and tap on the laptop touchpad.*
 
 ## Features
 
-- **Keyboard Interaction** — Auto-calibrated QWERTY key pressing with sub-key precision
-- **Multi-Camera Vision** — Intel RealSense D435i (RGBD overhead), side webcam, workspace overview
+- **Dual-Arm Coordination** — Two myCobot 280 arms working together, 69 keys across both arms
+- **XML Keyboard Layout** — Parse device XML for exact key positions, map all 78 keys from just 2 anchor clicks
+- **Multi-Camera Vision** — 2x Intel RealSense D435i (RGBD) + overhead webcam + Pi side camera
 - **Voice Control** — Speak commands to control the robot ("type hello", "press A", "dance")
 - **50+ Atomic Actions** — Joint/Cartesian motion, jog, servo control, LED, gestures
 - **VLM Integration** — Azure GPT-4o for object grounding, visual QA, and action planning
@@ -37,47 +44,64 @@
 ## Architecture
 
 ```
-┌─────────── Dev Laptop ──────────────────────────┐
-│                                                   │
-│  MCP Server (src/mcp_server.py)                   │
-│   ├── Robot Actions API (50+ functions)           │
-│   ├── Azure GPT-4o (VLM + Agent)                  │
-│   └── MyCobot280Socket ──── TCP:9000 ─────┐      │
-│                                             │      │
-│  Intel RealSense D435i (USB)                │      │
-│   └── Overhead RGBD capture                 │      │
-│                                             │      │
-│  Voice Control (speech_recognition)         │      │
-│  Overview Camera (USB webcam)               │      │
-└─────────────────────────────────────┼───────┼──────┘
-                                      │       │
-                                 Ethernet Link
-                                      │       │
-┌─────────────────────────────────────┼───────┼──────┐
-│         Raspberry Pi (on robot)     │       │      │
-│                                     ▼       ▼      │
-│  Side-View Webcam (port 8080)       │       │      │
-│   └── MJPEG stream + snapshots      │       │      │
-│                                             │      │
-│  TCP-Serial Bridge (port 9000) ◄────────────┘      │
-│   └── pymycobot → myCobot servos                   │
-└─────────────────────────────────────────────────────┘
+┌─────────── Dev Laptop ──────────────────────────────────┐
+│                                                           │
+│  MCP Server (src/mcp_server.py)                           │
+│   ├── 45+ MCP Tools (keyboard, touchpad, vision, etc.)    │
+│   ├── Azure GPT-4o (VLM + Agent)                          │
+│   └── Dual-Arm Control ─────────────────────┐            │
+│                                               │            │
+│  Intel RealSense D435i x2 (USB)              │            │
+│   ├── Overhead: key annotation + depth        │            │
+│   └── Front: device view                     │            │
+│                                               │            │
+│  Overhead Webcam (USB) — workspace overview   │            │
+│  Voice Control (speech recognition)           │            │
+└───────────────────────────────────────┼───────┼────────────┘
+                                        │       │
+                                   Network Switch
+                                   ┌────┘       └────┐
+                                   │                  │
+                      ┌────────────┴───┐  ┌───────────┴────┐
+                      │  Left Arm Pi   │  │  Right Arm Pi  │
+                      │ 10.105.230.94  │  │ 10.105.230.93  │
+                      │ TCP bridge:9000│  │ TCP bridge:9000│
+                      │ 33 keys (left) │  │ 36 keys (right)│
+                      └────────────────┘  │ Pi webcam:8080 │
+                                          └────────────────┘
+
+  [Left Arm]     [Laptop/DUT]     [Right Arm]
+    33 keys    78 keys + touchpad    36 keys
+```
+
+## Calibration Pipeline
+
+```
+Keyboard XML (78 keys in mm positions)
+  → Overhead RealSense image + 2 anchor clicks
+    → All 78 keys mapped to pixel coordinates
+      → Drag-teach ~6 keys per arm
+        → Pixel-to-robot affine per arm
+          → 69 keys with robot coordinates across both arms
 ```
 
 ## Project Structure
 
 ```
 MyCobotAgent/
-├── config.yaml                 # Robot IP, camera config, API settings
+├── config.yaml                 # Robot IPs, camera config
 ├── requirements.txt            # Python dependencies
-├── press_key.py                # Keyboard key pressing (main tool)
-├── voice_control.py            # Voice-controlled robot interaction
-├── device_interactor.py        # Auto keyboard/touchpad detection via RGBD
-├── keyboard_presser.py         # Keyboard detection + pressing pipeline
-├── vision_presser.py           # Vision-guided pressing with visual servoing
-├── tcp_serial_bridge.py        # Deploy on Pi: TCP↔serial relay for robot
+├── SKILL.md                    # MCP tool catalog for agents
+│
+├── annotate_keys.py            # XML anchor-based key annotation GUI
+├── map_keys_to_robot.py        # Drag-teach + pixel-to-robot mapping
+├── press_key_dual.py           # Dual-arm key pressing
+├── press_key.py                # Single-arm key pressing
+├── voice_control.py            # Speech-controlled interaction
+├── record_demo_v2.py           # 3-camera demo recording
+│
+├── tcp_serial_bridge.py        # Deploy on Pi: TCP↔serial relay
 ├── pi_camera_server.py         # Deploy on Pi: webcam MJPEG server
-├── pi_dual_camera_server.py    # Deploy on Pi: RealSense + webcam server
 │
 ├── src/                        # Core library
 │   ├── mcp_server.py           # MCP server with 40+ tools
@@ -104,8 +128,10 @@ MyCobotAgent/
 │   └── recording/              # Demo GIF/video recording
 │
 ├── data/                       # Calibration data and key layouts
-│   ├── keyboard_taught.json    # Taught key positions
-│   ├── calibration_realsense.json  # RealSense-to-robot transform
+│   ├── keyboard_layout.xml     # Ortler keyboard XML (key positions in mm)
+│   ├── keyboard_layout_parsed.json  # Parsed XML layout
+│   ├── keyboard_dual_arm.json  # Dual-arm key mapping
+│   ├── keyboard_vision_detected.json  # Vision-detected key positions
 │   └── ...
 │
 ├── temp/                       # Runtime captures (gitignored)
@@ -116,9 +142,10 @@ MyCobotAgent/
 
 ### 1. Prerequisites
 
-- **myCobot 280 Pi** with Raspberry Pi 4
-- **Intel RealSense D435i** (USB, mounted overhead)
-- Ethernet connection between laptop and Pi
+- **2x myCobot 280 Pi** with Raspberry Pi 4 (left + right arms)
+- **2x Intel RealSense D435i** (USB, overhead + front)
+- Network switch connecting both Pi's to the dev laptop
+- Keyboard XML layout file for the target device
 - Python 3.10+
 
 ### 2. Install
