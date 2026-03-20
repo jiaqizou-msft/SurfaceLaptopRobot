@@ -12,9 +12,9 @@
 
 ### XML-Based Key Detection (78 Keys + Touchpad)
 
-![Key detection](demo_key_detection.jpg)
+![Key detection](demo_key_detection.png)
 
-*All 78 keys automatically mapped from the Ortler keyboard XML layout. Just click 2 anchor keys in the overhead image — the system computes every key's position using the exact mm geometry from the XML.*
+*All 78 keys + touchpad automatically mapped from the Ortler keyboard XML layout. Click 2 anchor keys in the overhead RealSense image — the system computes every key's pixel position using exact mm geometry from the XML. Supports rigid (2-anchor) and affine (3+) transforms.*
 
 ### Keyboard Typing (Fast Mode)
 
