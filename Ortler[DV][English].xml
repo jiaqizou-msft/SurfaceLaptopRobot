@@ -3,7 +3,7 @@
 	<DEVICE NAME="Ortler" SKU="DV" TYPE="English">
 		<UPPERLEFTOFFSET>
 			<REGION Name="Keyboard" X="2" Y="2" />
-			<REGION Name="Touchpad" X="84" Y="110" />
+			<REGION Name="Touchpad" X="80" Y="120" />
 		</UPPERLEFTOFFSET>
 		<TP W="111" H="90" />
 		<KEYSET>
